@@ -1,0 +1,356 @@
+%========================================================================================
+% Compilation should work with PDFLaTeX
+%========================================================================================
+% Type of document and general formatting
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\linespread{1.25}
+
+%========================================================================================
+% These packages are for language and font settings
+\usepackage[english,activeacute]{babel} % Language
+\usepackage{tgpagella}					% Text font
+\usepackage[T1]{fontenc}				% T1 Encoding of font
+\usepackage[utf8x]{inputenc}				% Special symbols
+\usepackage{lmodern}
+
+
+%========================================================================================
+\usepackage[sc]{mathpazo}				% Math font
+\usepackage{amsmath,amsfonts,amssymb}	% Math symbols
+\usepackage{dsfont}						% Math symbols like R for reals...
+
+
+%========================================================================================
+% Other packages
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage[svgnames]{xcolor}
+
+%========================================================================================
+\usepackage{accents}
+\newcommand*{\dt}[1]{%
+	\accentset{\mbox{\large\bfseries .}}{#1}} % Larger dot for time derivative
+
+
+\usepackage{hyperref}
+\hypersetup
+{
+    pdfauthor={Rafael Serrano-Quintero},
+    pdfsubject={Structural Transformation in Indian Services},
+    colorlinks = {true},
+    linkcolor = {FireBrick},
+    citecolor = {FireBrick},
+    urlcolor = {RoyalBlue},
+}
+
+\usepackage{appendix}
+\usepackage{marvosym}
+\usepackage{enumerate} %For enumerating with letters with option [a)]
+\usepackage{fancyvrb}  %To reduce font size in verbatim environment
+\usepackage{epstopdf}
+\usepackage[flushleft]{threeparttable}
+\usepackage{pdflscape}
+\usepackage{natbib}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage[super]{nth}
+\usepackage{float}
+
+\newcommand{\source}[1]{\caption*{\tiny Source: {#1}} }
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{remark}{Remark}
+\newtheorem{example}{Example}
+
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\dotprod}[2]{\langle #1, #2 \rangle}
+
+%========================================================================================
+% Stata Preamble for Tables
+%========================================================================================
+
+\newcommand{\sym}[1]{\rlap{#1}}% Thanks to David Carlisle
+
+\let\estinput=\input% define a new input command so that we can still flatten the document
+
+\newcommand{\estwide}[3]{
+		\vspace{.75ex}{
+			\begin{tabular*}
+			{\textwidth}{@{\hskip\tabcolsep\extracolsep\fill}l*{#2}{#3}}
+			\toprule
+			\estinput{#1}
+			\bottomrule
+			\addlinespace[.75ex]
+			\end{tabular*}
+			}
+		}	
+
+\newcommand{\estauto}[3]{
+		\vspace{.75ex}{
+			\begin{tabular}{l*{#2}{#3}}
+			\toprule
+			\estinput{#1}
+			\bottomrule
+			\addlinespace[.75ex]
+			\end{tabular}
+			}
+		}
+
+% Allow line breaks with \\ in specialcells
+	\newcommand{\specialcell}[2][c]{%
+	\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+
+% *****************************************************************
+% Custom subcaptions
+% *****************************************************************
+% Note/Source/Text after Tables
+\newcommand{\figtext}[1]{
+	\vspace{-1.9ex}
+	\captionsetup{justification=justified,font=footnotesize}
+	\caption*{\hspace{6pt}\hangindent=1.5em #1}
+	}
+\newcommand{\fignote}[1]{\figtext{\emph{Note:~}~#1}}
+
+\newcommand{\figsource}[1]{\figtext{\emph{Source:~}~#1}}
+
+% Add significance note with \starnote
+\newcommand{\starnote}{\figtext{* p < 0.1, ** p < 0.05, *** p < 0.01. Standard errors in parentheses.}}
+
+% *****************************************************************
+% siunitx
+% *****************************************************************
+\usepackage{siunitx} % centering in tables
+	\sisetup{
+		detect-mode,
+		tight-spacing		= true,
+		group-digits		= false ,
+		input-signs		= ,
+		input-symbols		= ( ) [ ] - + *,
+		input-open-uncertainty	= ,
+		input-close-uncertainty	= ,
+		table-align-text-post	= false
+        }
+
+%========================================================================================
+					% === Title, thanks, and author data === %
+%========================================================================================
+
+
+\title{\textbf{Image Approximation with Fourier Wavelets}\thanks{These are notes based on Gabriel Peyr\'e's exceptional \href{http://www.numerical-tours.com/matlab/}{Numerical Tours} and are for my own personal study.}}
+
+\begin{document}
+\maketitle
+
+\section{Image Loading and Displaying}
+To load and visualize images, the toolboxes provide direct commands.
+
+\begin{Verbatim}[fontsize = \small]
+n = 256; % Size of image
+M = load_image('lena',n);
+
+figure
+imageplot(M)
+\end{Verbatim}
+
+An image  is just a matrix $f\in\mathbb{R}^N$ of $N = N_0 \times N_0$ pixels.
+
+To implement subplots within the \verb!imageplot!
+
+\begin{Verbatim}[fontsize = \small]
+figure
+imageplot(M(1:50,1:50),'Zoom',1,2,1)
+imageplot(-M,'Reversed contrast',1,2,2)
+\end{Verbatim}
+
+\subsection{Blurring}
+
+Blurring is achieved by computing a convolution $(f\ast g)$ with a kernel $g$.
+
+\begin{definition}
+A \textbf{convolution} is a mathematical operation on two functions $(f,g)$ that produces a third function expressing how the shape of one is modified by the other. The term convolution refers to both the result function and to the process of computing it. It is defined as the integral of the product of the two functions after one is reversed and shifted.The convolution of $f$ and $g$ is written $f∗g$, denoting the operator with the symbol $∗$. It is a particular kind of integral transform:
+\[
+(f\ast g) \triangleq \int^{\infty}_{-\infty} f(\tau)g(t-\tau)d\tau
+\]
+\end{definition}
+
+\begin{Verbatim}[fontsize = \small]
+k = 9; % size of the kernel (the larger, the more blurred)
+g = ones(k,k);
+g = g/sum(g(:)); % normalize
+
+fg = perform_convolution(f,g);
+
+% Blurred image
+figure
+imageplot(fh,'Blurred',1,2,1)
+imageplot(f,'Original',1,2,2)
+\end{Verbatim}
+
+\begin{figure}[htbp]
+\centering 
+	\includegraphics[width = 0.75\textwidth]{../figures/blurr_example.pdf}
+	\caption{Blurring by use of Convolution}
+	\label{fig:blurr_convolution}
+\end{figure}
+
+\subsection{Fourier Transform}
+
+To measure error between an image $f$ and its approximation $f_M$, we use the signal-to-noise-ratio (SNR) measure
+\begin{definition}
+The signal to noise ratio (SNR) is defined as
+
+\[
+\text{SNR}(f,f_M) = -20\log_{10}\left(\frac{\norm{f - f_M}}{\norm{f}}\right)
+\]
+
+which is a quantity expressed in decibels (dB). The higher the SNR, the better the quality.
+\end{definition}
+
+\begin{definition}
+A basis $B$ of a vector space $V$ over a field $F$ (such as the real numbers $\mathbb{R}$ or the complex numbers $\mathbb{C}$) is a \textit{linearly independent} subset of $V$ that spans $V$. This means that a subset $B$ of $V$ is a basis if it satisfies the two following conditions:
+
+\begin{itemize}
+	\item \textbf{Linear independence property:} for every finite subset $\{b_1,\ldots,b_n\}$ of $B$ and every $a_1,\ldots,a_n$ in $F$, if $a_1b_1+\cdots+a_nb_n = 0$, then necessarily $a_1=\cdots=a_n= 0$;
+	\item \textbf{Spanning property:} for every (vector) $v\in V$, it is possible to choose $v_1,\ldots,v_n$ in $F$ and $b_1,\ldots, b_n$ in B such that $v = v_1b_1 +\cdots+ v_nb_n$.
+\end{itemize}
+\end{definition}
+
+\begin{definition}
+Any $n$ orthogonal vectors which are of unit length
+\[
+\dotprod{u_i}{u_j} = \begin{cases}
+1 & \text{if } $i = j$ \\ 
+0 & \text{otherwise} \\
+\end{cases}
+\]
+
+form an orthonormal basis of $\mathbb{R}^n$
+\end{definition}
+
+\begin{definition}
+The Fourier orthonormal basis is defined as
+\[
+\psi_m(k) = \frac{1}{\sqrt{N}}e^{\frac{2i\pi}{N_0} \dotprod{m}{k}}
+\]
+
+where $0 \leq k_1,k_2 < N_0$  are position indexes, and $0\leq m_1,m_2 < N_0$ are frequency indexes.
+\end{definition}
+
+The Fourier transform $\hat{f}$ is the projection of the image on this Fourier basis.
+
+\[
+\hat{f}(m) = \dotprod{f}{\psi_m}.
+\]
+The Fourier transform is computed in $O(Nlog(N))$ operation using the FFT algorithm (Fast Fourier
+Transform). Note the normalization by $N = \sqrt{N_0}$ to make the transform orthonormal.
+
+The following snippet of code shows the Fourier transform of the original image, conservation of energy, and the log of the Fourier magnitude $\left(\log\left(\norm{\hat{f}(m)}+\varepsilon\right)\right)$. The function \verb!fftshift! shifts the zero-frequency component to the center of the array.
+
+\begin{Verbatim}[fontsize = \small]
+% Normalized Fast Fourier Transform
+F = fft2(f)/n0;
+
+% Check conservation of the image
+fprintf('Energy of image: %5.5f \n',norm(f(:)))
+fprintf('Energy of Fourier: %5.5f \n',norm(F(:)))
+
+% Compute the log¡ of the Fourier magnitude for some small epsilon
+epsi = 1e-2;
+
+% Shift the zero frequency component to the center of the array
+L = fftshift(log(abs(F)+1e-1));
+
+% Display
+clf;
+imageplot(L,'Log(Fourier Transform)')
+\end{Verbatim}
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width = 0.45\textwidth]{../figures/log_fourier_transform.pdf}
+	\caption{Log of Fourier Magnitude}
+	\label{fig:log_fourier_magnitude}
+\end{figure}
+
+\subsection{Linear Fourier Approximation}
+An approximation is obtained by retaining a certain set of index $I_M$ 
+
+\[
+f_M = \sum_{ m \in I_M } \dotprod{f}{\psi_m} \psi_m.
+\]
+
+
+A linear approximation is obtained by retaining a \textbf{fixed} set $I_M$ of $M = \lvert I_M \rvert$ coefficients. The important point is that $I_M$ does not depend on the image $f$ to be approximated.
+
+For the Fourier transform, a low pass linear approximation is obtained by keeping only the frequencies within a square. 
+
+\[
+I_M = \{m=(m_1,m_2), -q/2 \leq m_1,m_2 < q/2 \}
+\]
+
+where $q=\sqrt{M}$.
+
+This can be achieved by computing the Fourier transform, setting to zero the $N-M$ coefficients outside the square $I_M$ and then inverting the Fourier transform.
+
+\begin{example}
+Perform the linear Fourier approximation with $M$ coefficients. Store the result in the variable \verb!fM! and display.
+
+\begin{Verbatim}[fontsize = \small]
+% Number of kept coefficients
+M = n0^2/64;
+% Bound of interval
+q = sqrt(M);
+
+% Compute Centered Fourier transform
+F = fft2(f);
+
+% Linear approximation pre-allocation
+F1 = zeros(n0,n0);
+
+% Choose a square in the middle of the image
+sel = (n0/2-q/2:n0/2+q/2) + 1;
+
+% Take the points of the square to the linear approx
+F1(sel,sel) = F(sel,sel);
+
+% Invert the Fourier and keep real terms
+fM = real(ifft2(F1));
+
+% Plot
+figure
+imageplot(f,'Original',1,2,1)
+imageplot(F1,['Linear Fourier Approximation with ',num2str(snr(f,fM),4)])
+\end{Verbatim}
+\end{example}
+
+\subsection{Non-Linear Fourier Transform}
+
+A non-linear approximation is obtained by taking the $M$ largest coefficients. This is equivalently computed using a threshold for the coefficients.
+
+\[
+I_M = \{m, \left\lvert\dotprod{f}{\psi_m}\right\rvert > T\}
+\]
+
+Figures \ref{fig:fourier_linear_approx} and \ref{fig:fourier_nonlinear_approx} show the linear and non-linear approximations for a different set of parameter values.
+
+\begin{figure}[htbp]
+	\begin{subfigure}{0.45\textwidth}
+	\centering 
+			\includegraphics[width = \textwidth]{../figures/fourier_linear_approx.pdf}
+		\caption{Linear}
+		\label{fig:fourier_linear_approx}
+	\end{subfigure}
+	\begin{subfigure}{0.45\textwidth}
+	\centering 
+		\includegraphics[width = \textwidth]{../figures/fourier_nonlinear_approx.pdf}
+	\caption{Non-linear}
+	\label{fig:fourier_nonlinear_approx}
+	\end{subfigure}
+	\caption{Fourier Approximations for Different Parameter Values}
+	\label{fig:fourier_approximations}
+\end{figure}
+
+\end{document}
