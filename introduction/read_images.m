@@ -2,6 +2,8 @@ close all
 clear all
 clc
 
+set(0,'defaulttextinterpreter','factory')
+set(0,'defaultAxesFontName','Palatino LinoType')
 figs_folder = 'figures/';
 
 %==================================================================================================
