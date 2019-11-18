@@ -216,5 +216,27 @@ The rationale for the code is the same as before. However, now I impose two stop
 	\label{fig:gradient_descent_2d}
 \end{figure}
 
+\subsection{Gradient and Divergence of Images}
+Local differential operators like gradient, divergence and laplacian are the building blocks for variational image processing.
+
+Load an image $x_0\in\mathbb{R}^N$ of $N=n\times n$ pixels.
+
+For a continuous function g, the gradient reads
+
+\[
+\nabla g(s) = \left(\frac{\partial g(s)}{\partial s_1},\frac{\partial g(s)}{\partial s_2}\right)\in\mathbb{R}^2
+\]
+
+(note that here, the variable $s$ denotes the $2-$D spatial position).
+
+We discretize this differential operator on a discrete image $x\in\mathbb{R}^N$ using first order finite differences.
+
+\[
+\left(\nabla x\right)_i = (x_{i_1,i_2} - x_{i_1 - 1, i_2}, x_{i_1,i_2} - x_{i_1,i_2-1})\in\mathbb{R}^2
+\]
+
+Note that for simplity we use periodic boundary conditions.
+
+Compute its gradient, using finite differences.
 
 \end{document}
