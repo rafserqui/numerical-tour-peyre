@@ -66,15 +66,29 @@ g = ones(k,k);
 g = g/sum(g(:)); % normalize
 
 fg = perform_convolution(f,g);
+fg2 = conv2(f,g,'same');
 
 % Blurred image
 figure
-imageplot(fg,'Blurred',1,2,1)
-imageplot(f,'Original',1,2,2)
+imageplot(fg,'Blurred (Peyre)',1,3,1)
+imageplot(fg2,'Blurred (conv2)',1,3,2)
+imageplot(f,'Original',1,3,3)
 export_fig(sprintf('%sblurr_example',figs_folder),'-pdf','-transparent');
 
-
 close all
+
+% Sobel edge detector
+n = 3;
+g = zeros(n,n);
+g(:,1) = [1;2;1];
+g(:,3) = -g(:,1);
+
+fg = conv2(f,g);
+
+figure
+imageplot(fg,'Sobel Edge Detector',1,2,1)
+imageplot(f,'Original',1,2,2)
+
 
 %==================================================================================================
 % Fourier transform

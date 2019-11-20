@@ -155,9 +155,9 @@ figure
 imageplot(M)
 \end{Verbatim}
 
-An image  is just a matrix $f\in\mathbb{R}^N$ of $N = N_0 \times N_0$ pixels.
+An image  is just a matrix $f\in\mathbb{R}^N$ of $N = N_0 \times N_0$ pixels and each element of the matrix denotes the \textit{``intensity''} of that pixel.
 
-To implement subplots within the \verb!imageplot!
+To implement subplots within the \verb!imageplot! command is as easy as:
 
 \begin{Verbatim}[fontsize = \small]
 figure
@@ -165,16 +165,96 @@ imageplot(M(1:50,1:50),'Zoom',1,2,1)
 imageplot(-M,'Reversed contrast',1,2,2)
 \end{Verbatim}
 
-\subsection{Blurring}
+\subsection{From Pixels to Operations of Groups of Pixels}
 
-Blurring is achieved by computing a convolution $(f\ast g)$ with a kernel $g$.
+Suppose we have an image represented as some matrix $f\in\mathbb{R}^N$, each point $x_{i_1,i_2}$ denotes the intensity. Now we want to move from operations with one single pixel to operations with several pixels around. Some applications might be for blurring, smoothing edges...
+
+\paragraph{How to smooth a signal?}
+
+A simple way of smoothing a given $1-$D signal is to take the average of neighbouring values, i.e. a moving average or a weighted moving average process.
+
+\begin{itemize}
+	\item \textbf{Moving Average:} take the $N$ (odd) neighbouring values of a given $x_{j}$ with equal weights and divide by $N$, thus each smoothed value 
+	\[
+	\tilde{x}_{j} = \frac{1}{N}\sum_{n=-\frac{(N-1)}{2}}^{\frac{(N-1)}{2}} x_{j+n}
+	\]
+	\item \textbf{Weighted Moving Average:} same as before but weighting each point with a given weight $\omega_n$. 
+	\[
+	\tilde{x}_j = \frac{1}{N}\sum_{n=-\frac{(N-1)}{2}}^{\frac{(N-1)}{2}}\omega_n x_{j+n} \ ; \ \sum_{n=-\frac{(N-1)}{2}}^{\frac{(N-1)}{2}} \omega_n = 1
+	\]	
+\end{itemize}
+
+For an image, which would be a $2-D$ matrix, we would want to take the matrix and transform each pixel using its neighbouring values. Suppose we start with a given matrix $f\in\mathbb{R}^{9\times 9}$, i.e. a $9\times 9$ matrix and we want to perform operations on subsets of this matrix. In this example, we want to make an operation over a $3\times 3$ subset of the matrix with the initial pixel in the center of the matrix, and generate a new value to place it in the smoothed image $\tilde{f}$ at that precise location. That is, suppose we start with the original matrix $f\in\mathbb{R}^{9\times 9}$ and select the element $x_{2,2}$. The $3\times 3$ subset that corresponds to the element $x_{2,2}$ of $f$ will be the sub-matrix $K^{2,2}$
+
+\[
+K^{2,2} = \begin{pmatrix}
+x_{1,1} & x_{1,2} & x_{1,3} \\
+x_{2,1} & x_{2,2} & x_{2,3} \\
+x_{3,1} & x_{3,2} & x_{3,3} \\
+\end{pmatrix}
+\]
+
+We want to perform an operation over $K^{2,2}$ so that we get a corresponding smoothed value $\tilde{x}_{2,2}$ in the smoothed image $\tilde{f}$.
+
+One possibility is to just average over the values of $K^{i,j}$, in this case, the operation would be $(1/9)\sum_{j=1}^N x_j$ where $x_j\in K^{i,j}$. 
+
+In Figure \ref{fig:smoothed_image} we start with a matrix with many pixels in black, and some center pixels in white. By the process of averaging neighbours, we get the smoothed image with different shades of gray.
+
+\begin{figure}[htbp]
+	\centering 
+		\includegraphics[width = 0.45\textwidth]{../figures/averaging_image.pdf}
+	\caption{Smoothed Image via Neighbor Averaging}
+	\label{fig:smoothed_image}
+\end{figure}
+
+This specific step-by-step process is generalized by thinking about \textit{kernels}.
 
 \begin{definition}
-A \textbf{convolution} is a mathematical operation on two functions $(f,g)$ that produces a third function expressing how the shape of one is modified by the other. The term convolution refers to both the result function and to the process of computing it. It is defined as the integral of the product of the two functions after one is reversed and shifted.The convolution of $f$ and $g$ is written $f∗g$, denoting the operator with the symbol $∗$. It is a particular kind of integral transform:
+A \textbf{kernel, convolution matrix,} or \textbf{mask} is a (usually small) matrix used to tweak in some way an image. The way in which the kernel can be applied to an image is through a \textit{convolution} or a \textit{cross-correlation}.
+\end{definition}
+
+Basically, a kernel $K(i,j)$ is applied to an image pixel by pixel. Important elements are the size of the kernel, which depends on the number of neighbours $k$ (in the example, $k = 1$), and the window size, which is equal to $2k+1$. The number of neighbours is $k$ since we move $k$ elements in each direction from the central pixel. With $k = 1$, we get a kernel of size $3\times 3$, given by the window size.
+
+\paragraph{Blurring} Blurring is achieved by computing a convolution $(f\ast g)$ with a kernel $g$.
+
+A \textbf{convolution} is a mathematical operation on two functions $(f,g)$ that produces a third function expressing how the shape of one is modified by the other. The term convolution refers to both the result function and to the process of computing it. It is defined as the integral of the product of the two functions after one is reversed and shifted.
+
+
+\begin{definition}
+If $f$ and $g$ are two continuous functions, the convolution of $f$ and $g$ denoted $(f\ast g)$, is a particular kind of integral transform:
 \[
 (f\ast g) \triangleq \int^{\infty}_{-\infty} f(\tau)g(t-\tau)d\tau
 \]
+
+If $f$ and $g$ are two discrete functions, the convolution of $f$ and $g$ is defined as:
+\[
+(f\ast g) \triangleq \sum_{\tau=-\infty}^{+\infty} f(\tau)g(x-\tau)
+\]
+
+Function $g$ is usually called the \textit{input}, and $f$ the \textit{kernel} of the convolution.
 \end{definition}
+
+Intuitively, the convolution of two functions represents the amount of overlap between the two functions. In image processing, what we call convolution is related to the previous definition and to the product of matrices. A function of two variables $f(x,y)$ can be regarded as a matrix $A_{x,y}$, thus, we can define convolution of matrices as in Definition \ref{def:convolution_matrix}. 
+
+\begin{definition}\label{def:convolution_matrix}
+Given two functions $f$ and $g$ represented as the $n\times m$ matrix $A$ and the $k\times\ell$ matrix $B$, then $(f\ast g)$ is an $(n+k-1)\times(m+\ell-1)$ matrix $C$ in which each element is defined as:
+\[
+c_{x,y} = \sum_{u}\sum_{v} a_{u,v}b_{(x-u+1),(y-v+1)}
+\]
+where $u$ and $v$ range over all legal subscripts for $a_{uv}$ and $b_{(x-u+1),(y-v+1)}$.
+\end{definition}
+
+Suppose we want to construct a kernel with $k$ neighbours and $(2k+1)$ window size that smoothes our image $F$ by taking averages. Let $G$ denote the smoothed image resulting from applying a kernel $K$, and $G_{i,j}$ the $ij-$th element of the output image.This element can be computed as
+\[
+G_{i,j} = \frac{1}{(2k+1)^2}\sum_{u=-k}^{k}\sum_{v=-k}^k F_{i-u,j-v}
+\]
+where the term $\frac{1}{(2k+1)^2}$ allows to normalize the elements of the resulting image and is, in fact, the weight each element receives. Note, that in this specific example, each element receives the same weight. If we wanted to include different weights to different elements, these would be given by the kernel. If we let $K_{i,j}$ denote the $ij-$th element of the kernel, the $ij-$th element of the convolution $G = (F\ast K)$ would be computed as
+\[
+G_{i,j} = \sum_{u=-k}^k\sum_{v=-k}^k K_{u,v}F_{i-u,j-v}
+\]
+where $K_{u,v}$ provides the non-uniform weights.
+
+The following snippet of code produces Figure \ref{fig:blurr_convolution}. The figure shows the effects of smoothing the image with a kernel of size $9\times 9$ in which each element is equal to $1/81$. Both functions \verb!perform_convolution! and \verb!conv2! yield similar results.
 
 \begin{Verbatim}[fontsize = \small]
 k = 9; % size of the kernel (the larger, the more blurred)
@@ -182,11 +262,13 @@ g = ones(k,k);
 g = g/sum(g(:)); % normalize
 
 fg = perform_convolution(f,g);
+fg2 = conv2(f,g,'same');
 
 % Blurred image
 figure
-imageplot(fh,'Blurred',1,2,1)
-imageplot(f,'Original',1,2,2)
+imageplot(fg,'Blurred (Peyre)',1,3,1)
+imageplot(fg2,'Blurred (conv2)',1,3,2)
+imageplot(f,'Original',1,3,3)
 \end{Verbatim}
 
 \begin{figure}[htbp]
@@ -196,9 +278,99 @@ imageplot(f,'Original',1,2,2)
 	\label{fig:blurr_convolution}
 \end{figure}
 
+\paragraph{Median Filtering} A special case of filtering is the median filtering. We could take the same sub-matrix as with the average filtering case but stack its elements as a vector and compute the median of that resulting vector. As we did for the averaging filter, we could apply this filter to all $n\times n$ regions of our initial matrix. Why would we use median filtering?
+
+\begin{itemize}
+	\item It is a \textbf{non-linear} operation.
+	\item Reduces noise.
+	\item Preserves edges (sharp lines)
+	\item Main idea: use median of all pixels in a kernel instead of the mean.
+\end{itemize}
+
+Figure \ref{fig:median_filter} shows the effects of applying an $11\times 11$ median filter. Note how the edges are preserved.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width = 0.45\textwidth]{../figures/median_filtered.pdf}
+	\caption{Example of a Median Filtered Image}
+	\label{fig:median_filter}
+\end{figure}
+
+\paragraph{Convolution vs Cross-Correlation} A similar procedure to convolution is cross-correlation. The cross correlation $G = (F\otimes K)$ for a kernel $K$ and an image $F$ is defined as
+
+\[
+G_{i,j} = \sum_{u=-k}^k\sum_{v=-k}^k K_{u,v}F_{i+u,j+v}
+\]
+
+The main difference with a convolution is the indices of $F$, recall that for the convolution, the way we index is $F_{i-u,j-v}$. Suppose we take a $3\times 3$ kernel in which the central pixel is the origin, thus its index corresponds to $(0,0)$. Since it is $3\times 3$, the number of neighbours we are taking is $k = 1$. Let us take a general kernel $K$ and apply it to an impulse image $F$ which is of size $7\times 7$. An impulse image is one in which all elements are $0$ except for the element $(4,4)$ that is $1$.
+
+\[
+K = \begin{pmatrix}
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9 \\
+\end{pmatrix} \ ; F = \begin{pmatrix}
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{pmatrix}
+\]
+
+As an example, take the $(4,3)$ element of the cross-correlation between $F$ and $K$. This is equal to $6$ since all elements are $0$ except $F_{4,4}$. But the step by step procedure is:
+
+\[
+(F\otimes K)_{4,3} = 7\times F_{3,2} + 8\times F_{3,3} + 9\times F_{3,4} + 4\times F_{4,2} + 5\times F_{4,3} + 6\times F_{4,4} + 1\times F_{5,2} + 2\times F_{5,3} + 3\times F_{5,4} = 6
+\]
+
+Instead, the convolution, would still have all elements equal to $0$ except for $F_{4,4}$ but the coefficient that goes with $F_{4,4}$ in the convolution is not $6$ but $4$. The resulting matrices for the convolution and the cross-correlation are shown below.
+
+\[
+(F\ast K) = \begin{pmatrix}
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 2 & 3 & 0 & 0 \\
+0 & 0 & 4 & 5 & 6 & 0 & 0 \\
+0 & 0 & 7 & 8 & 9 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{pmatrix} \ ; \ (F\otimes K) = \begin{pmatrix}
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 9 & 8 & 7 & 0 & 0 \\
+0 & 0 & 6 & 5 & 4 & 0 & 0 \\
+0 & 0 & 3 & 2 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+\end{pmatrix}
+\]
+
+Let us visualize what we have just done. Starting with the impulse image and applying that kernel to it would result in Figure \ref{fig:cross_corr}. 
+
+\begin{figure}[htbp]
+	\centering 
+		\includegraphics[width = 0.55\textwidth]{../figures/cross_corr.pdf}
+	\caption{Impulse image, kernel, cross-correlation, and convolution}
+	\label{fig:cross_corr}
+\end{figure}
+
+\paragraph{Properties of Convolution} Some properties of convolution:
+
+\begin{itemize}
+	\item \textbf{Linear and shift invariants:} behaves the same everywhere. The value of the output depends on the patttern in the image neighborhood, not the position of the neighborhood.
+	\item \textbf{Commutative:} $(F\ast K) = (K\ast F)$.
+	\item \textbf{Associative:} $(F\ast K)\ast G = F\ast (K\ast G)$
+	\item \textbf{Identity:} unit impulse. $E = [\ldots,0,0,1,0,0,\ldots]$, then $(F\ast E) = F$.
+	\item \textbf{Separable:} if the filter is separable, we can convolve all rows and then all columns separately.
+\end{itemize}
+
 \subsection{Fourier Transform}
 
-To measure error between an image $f$ and its approximation $f_M$, we use the signal-to-noise-ratio (SNR) measure
+To measure error between an image $f$ and its approximation $f_M$, we use the signal-to-noise ratio (SNR) measure
+
 \begin{definition}
 The signal to noise ratio (SNR) is defined as
 
