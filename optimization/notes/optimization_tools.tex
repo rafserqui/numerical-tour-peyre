@@ -219,14 +219,11 @@ The rationale for the code is the same as before. However, now I impose two stop
 \subsection{Gradient and Divergence of Images}
 Local differential operators like gradient, divergence and laplacian are the building blocks for variational image processing.
 
-Load an image $x_0\in\mathbb{R}^N$ of $N=n\times n$ pixels.
-
-For a continuous function g, the gradient reads
+An image is a matrix $x_0\in\mathbb{R}^N$ of $N=n\times n$ pixels. For a continuous function $g$, the gradient reads
 
 \[
 \nabla g(s) = \left(\frac{\partial g(s)}{\partial s_1},\frac{\partial g(s)}{\partial s_2}\right)\in\mathbb{R}^2
 \]
-
 (note that here, the variable $s$ denotes the $2-$D spatial position).
 
 We discretize this differential operator on a discrete image $x\in\mathbb{R}^N$ using first order finite differences.
@@ -235,8 +232,27 @@ We discretize this differential operator on a discrete image $x\in\mathbb{R}^N$ 
 \left(\nabla x\right)_i = (x_{i_1,i_2} - x_{i_1 - 1, i_2}, x_{i_1,i_2} - x_{i_1,i_2-1})\in\mathbb{R}^2
 \]
 
-Note that for simplity we use periodic boundary conditions.
+Note that for simplity we use periodic boundary conditions. Thus, we get $\nabla : \mathbb{R}^n\mapsto\mathbb{R}^{N\times 2}$. Figure \ref{fig:grad_image} shows the discretized gradient on an image. The left-hand side shows the first component of the gradient, while the right-hand side one shows the second component of the gradient.
 
-Compute its gradient, using finite differences.
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width = 0.45\textwidth]{../figures/gradient_descent_image.pdf}
+	\caption{Gradient Descent in a 2-D Image}
+	\label{fig:grad_image}
+\end{figure}
+
+The divergence operator maps vector field to images. For continuous vector fields $v(s)\in\mathbb{R}^2$, it is defined as 
+\[
+\text{div}(v)(s) = \frac{\partial v_1(s)}{\partial s_1} + \frac{\partial v_2(s)}{\partial s_2} \in\mathbb{R}
+\]
+
+(note that here, the variable $s$ denotes the 2-D spacial position). It is minus the adjoint of the gadient, i.e. $\text{div}=−\nabla^{\text{\textasteriskcentered}}$.
+
+It is discretized, for $v=(v_1,v_2)$ as 
+
+\[
+\text{div}(v)_i = v^1_{i_1+1,i_2} - v^1_{i_1,i_2} + v^2_{i_1,i_2+1} - v^2_{i_1,i_2}
+\]
+
 
 \end{document}
