@@ -67,6 +67,7 @@
 
 \newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
 \newcommand{\dotprod}[2]{\langle #1, #2 \rangle}
+\newcommand{\diver}{\text{div}}
 
 %========================================================================================
 % Stata Preamble for Tables
@@ -217,9 +218,10 @@ The rationale for the code is the same as before. However, now I impose two stop
 \end{figure}
 
 \subsection{Gradient and Divergence of Images}
+
 Local differential operators like gradient, divergence and laplacian are the building blocks for variational image processing.
 
-An image is a matrix $x_0\in\mathbb{R}^N$ of $N=n\times n$ pixels. For a continuous function $g$, the gradient reads
+\paragraph{Gradient} An image is a matrix $x_0\in\mathbb{R}^N$ of $N=n\times n$ pixels. For a continuous function $g$, the gradient reads
 
 \[
 \nabla g(s) = \left(\frac{\partial g(s)}{\partial s_1},\frac{\partial g(s)}{\partial s_2}\right)\in\mathbb{R}^2
@@ -232,27 +234,101 @@ We discretize this differential operator on a discrete image $x\in\mathbb{R}^N$ 
 \left(\nabla x\right)_i = (x_{i_1,i_2} - x_{i_1 - 1, i_2}, x_{i_1,i_2} - x_{i_1,i_2-1})\in\mathbb{R}^2
 \]
 
-Note that for simplity we use periodic boundary conditions. Thus, we get $\nabla : \mathbb{R}^n\mapsto\mathbb{R}^{N\times 2}$. Figure \ref{fig:grad_image} shows the discretized gradient on an image. The left-hand side shows the first component of the gradient, while the right-hand side one shows the second component of the gradient.
+Note that for simplity we use periodic boundary conditions. Thus, we get $\nabla : \mathbb{R}^n\mapsto\mathbb{R}^{N\times 2}$. Figure \ref{fig:grad_image} shows the discretized gradient in two images. The first row of figures shows a simple graph with two squares. Notice how the $dx$ shows a vertical lines denoting changes from black into white and the other way around, while the $dy$ figure shows horizontal lines denoting the change from black into white. The second row shows the same but for a real image.
 
 \begin{figure}[htbp]
 	\centering
-		\includegraphics[width = 0.45\textwidth]{../figures/gradient_descent_image.pdf}
+		\includegraphics[width = 0.65\textwidth]{../figures/gradient_descent_image.pdf}
 	\caption{Gradient Descent in a 2-D Image}
 	\label{fig:grad_image}
 \end{figure}
 
-The divergence operator maps vector field to images. For continuous vector fields $v(s)\in\mathbb{R}^2$, it is defined as 
+\paragraph{Magnitude} The magnitude is just defined as the Euclidean norm, i.e. $\norm{\nabla g} = \sqrt{\left(\frac{\partial g(s)}{\partial s_1}\right)^2+\left(\frac{\partial g(s)}{\partial s_2}\right)^2}$. The magnitude is larger closer to the edges of the image. Figure \ref{fig:norm_image} shows the Euclidean norm or the magnitude for the image. This highlights borders where changes of color or transparency are sharper.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width = 0.65\textwidth]{../figures/magnitude_image.pdf}
+	\caption{Magnitude in a 2-D Image}
+	\label{fig:norm_image}
+\end{figure}
+
+\paragraph{Divergence Operator} The divergence operator maps vector field to images. For continuous vector fields $v(s)\in\mathbb{R}^2$, it is defined as 
 \[
-\text{div}(v)(s) = \frac{\partial v_1(s)}{\partial s_1} + \frac{\partial v_2(s)}{\partial s_2} \in\mathbb{R}
+\diver(v)(s) = \frac{\partial v_1(s)}{\partial s_1} + \frac{\partial v_2(s)}{\partial s_2} \in\mathbb{R}
 \]
 
-(note that here, the variable $s$ denotes the 2-D spacial position). It is minus the adjoint of the gadient, i.e. $\text{div}=−\nabla^{\text{\textasteriskcentered}}$.
+(note that here, the variable $s$ denotes the 2-D spatial position). It is minus the adjoint of the gadient, i.e. $\diver=−\nabla^*$.
 
 It is discretized, for $v=(v_1,v_2)$ as 
 
 \[
-\text{div}(v)_i = v^1_{i_1+1,i_2} - v^1_{i_1,i_2} + v^2_{i_1,i_2+1} - v^2_{i_1,i_2}
+\diver(v)_i = v^1_{i_1+1,i_2} - v^1_{i_1,i_2} + v^2_{i_1,i_2+1} - v^2_{i_1,i_2}
 \]
 
+It is a local measure of its \textit{``outgoingness''}, i.e. the extent to which there is more of the field vectors exiting an infinitesimal region of space than entering it. A point at which the flux is outgoing has positive divergence, and is often called a \textit{``source''} of the field. A point at which the flux is directed inward has negative divergence, and is often called a \textit{``sink''} of the field. The greater the flux of field through a small surface enclosing a given point, the greater the value of divergence at that point. A point at which there is zero flux through an enclosing surface has zero divergence.
+
+\paragraph{Laplacian Operator} The Laplacian operator is defined as $\Delta = \diver\circ\nabla = -\nabla^*\circ\nabla$. That is, the divergence of the gradient and denotes the rate at which the average value of an image $g$ over spheres centered at $s$ deviates from $g(s)$ as the radius of the spheres shrinks towards $0$. Basically it is the sum of the second order partial derivatives.
+
+Figure \ref{fig:grad_lap} shows the differences between the gradient and the Laplacian operators in our sample image.
+
+\begin{figure}[htbp]
+	\centering 
+		\includegraphics[width = 0.65\textwidth]{../figures/grad_lap.pdf}
+	\caption{Gradient, and Laplacian Operators}
+	\label{fig:grad_lap}
+\end{figure}
+
+\section{Newton's Method for Unconstrained Problems}
+
+Let us start with a highly anisotropic function, the Rosenbrock function given by
+\[
+g(x) = (1-x_1)^2 + 100(x_2-x_1^2)^2
+\]
+where at $x^*=(1,1)$ the function reaches its minimum with $g(x^*) = 0$. Figure \ref{fig:rosenbrock} shows the behavior of the function on a $3-$D grid.
+
+\begin{figure}[htbp]
+	\centering
+		\includegraphics[width = 0.55\textwidth]{../figures/rosenbrock.pdf}
+	\caption{Rosenbrock Function}
+	\label{fig:rosenbrock}
+\end{figure}
+
+If we would use gradient descent methods that only use first order gradient information about $g$, we would not be able to efficiently minimize the function because of the high anisotropy. Defining the gradient of $g$ as
+\[
+\nabla g(x) = \left(\frac{\partial g(x)}{\partial x_1},\frac{\partial g(x)}{\partial x_2}\right) = \left(2(x_1-1) + 400 x_1(x_1^2-x_2),200(x_2-x_1^2)\right)\in\mathbb{R}^2
+\]
+
+The Hessian matrix can be computed as
+\[
+\mathcal{H}g(x) = \begin{pmatrix}
+\frac{\partial^2 g(x)}{\partial x_1^2} & \frac{\partial^2 g(x)}{\partial x_1\partial x_2} \\
+\frac{\partial^2 g(x)}{\partial x_1 \partial x_2} & \frac{\partial^2 g(x)}{\partial x_2^2}
+\end{pmatrix} = \begin{pmatrix}
+2 + 400 (x_1^2-x_2) + 800 x_1^2 & -400 x_1 \\
+-400 x_1 & 200
+\end{pmatrix} \in \mathbb{R}^{2\times 2}
+\]
+
+The Newton descent method starting from some $x^{(0)}\in\mathbb{R}^2$ is computed by iterating on
+\[
+x^{(\ell+1)} = x^{(\ell)} - \left[\mathcal{H}g\left(x^{(\ell)}\right)\right]^{-1}\nabla g\left(x^{(\ell)}\right)
+\]
+
+\paragraph{Intuition of Newton's Method in 1 Dimension} Suppose we have a single variable function $f(x)$, the method tries to find the roots of $f'(x)$ by constructing a sequence $x^{(\ell)}$ from an initial guess $x^{(0)}$ that converges towards some value $x^*$ satisfying $f'(x^*) = 0$. Taking a second-order Taylor expansion $f_T(x)$ of $f(x)$ around $x^{(\ell)}$:
+\[
+f_T(x) = f_T(x^{(\ell)} + \Delta x) \approx f(x^{(\ell)}) + f'(x^{(\ell)})\Delta x + \frac{1}{2}f''(x^{(\ell)})\Delta x^2
+\]
+
+We want to pick $\Delta x$ such that $x^{(\ell)} + \Delta x$ is a stationary point of $f$. Using the Taylor expansion, we can solve for $\Delta x$ corresponding to the root of the expansion's derivative:
+\[
+\Delta x = -\frac{f'(x^{(\ell)})}{f''(x^{(\ell)})}
+\]
+
+Provided the Taylor expansion approximation is fairly accurate, then incrementing by $\Delta x$ should yield a point close enough to an actual stationary point of $f$. This point is given by 
+\[
+x^{(\ell+1)} = x^{(\ell)} + \Delta x = x^{(\ell)} - \frac{f'(x^{(\ell)})}{f''(x^{(\ell)})}
+\]
+
+For a two-dimensional problem, we just replace the first derivative by the gradient $\nabla f(x)$ and the reciprocal of the second derivative by the inverse of the Hessian matrix $\left[\mathcal{H}g\left(x^{(\ell)}\right)\right]^{-1}$.
 
 \end{document}
