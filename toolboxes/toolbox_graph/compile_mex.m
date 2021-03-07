@@ -1,8 +1,8 @@
 % compile mex file
-mex mex/perform_front_propagation_2d.cpp mex/perform_front_propagation_2d_mex.cpp mex/fheap/fib.cpp 
-mex mex/perform_front_propagation_3d.cpp mex/perform_front_propagation_3d_mex.cpp  mex/fheap/fib.cpp 
-mex mex/perform_circular_front_propagation_2d.cpp mex/perform_front_propagation_2d.cpp mex/fheap/fib.cpp 
-mex mex/fm2dAniso.cpp
+mex mex/perform_front_propagation_2d.cpp mex/perform_front_propagation_2d_mex.cpp mex/fheap/fib.cpp -compatibleArrayDims
+mex mex/perform_front_propagation_3d.cpp mex/perform_front_propagation_3d_mex.cpp  mex/fheap/fib.cpp -compatibleArrayDims
+mex mex/perform_circular_front_propagation_2d.cpp mex/perform_front_propagation_2d.cpp mex/fheap/fib.cpp -compatibleArrayDims
+mex mex/fm2dAniso.cpp -compatibleArrayDims
 
 disp('Compiling perform_front_propagation_mesh, might time some time.');
 rep = 'mex/';

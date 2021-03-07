@@ -84,7 +84,7 @@ void mexFunction(	int nlhs, mxArray *plhs[],
 		
 	// first ouput : distance
 	int dims[3] = {n,p,q};
-	plhs[0] = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL );
+	plhs[0] = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
 	D = mxGetPr(plhs[0]);
 	// second output : state
 	if( nlhs>=2 )
